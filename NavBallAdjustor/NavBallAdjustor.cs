@@ -554,11 +554,10 @@ namespace NavBallAdjustor
             this.NBAfraidMouseOnFlightView = GUILayout.Toggle(this.NBAfraidMouseOnFlightView, ModStrings.OptionLabel.AfraidMouseOnFlight);
             GUILayout.EndHorizontal();
 
-            if (GUILayout.Button(ModStrings.Button.SaveClose))
-            {
-                this.ShowOptions = false;
-                SaveConfig();
-            }
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(ModStrings.Button.Save)) SaveConfig();
+            this.ShowOptions = !GUILayout.Button(ModStrings.Button.Close);
+            GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
 
@@ -663,11 +662,6 @@ namespace NavBallAdjustor
         {
             return UIVectorCamera.Camera == Camera.current;
         }
-
-        //private void LogException(Exception ex)
-        //{
-        //    System.IO.File.AppendAllText("NavBallAdjustor.log", string.Format("{0} : {1}{2}{2}", DateTime.Now, ex, Environment.NewLine));
-        //}
         #endregion
     }
 }

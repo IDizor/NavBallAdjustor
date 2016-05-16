@@ -97,9 +97,14 @@
             public const string Reset = "Reset";
 
             /// <summary>
-            /// The save & close button.
+            /// The save button.
             /// </summary>
-            public const string SaveClose = "Save & Close";
+            public const string Save = "Save";
+
+            /// <summary>
+            /// The close button.
+            /// </summary>
+            public const string Close = "Close";
         }
 
         /// <summary>
