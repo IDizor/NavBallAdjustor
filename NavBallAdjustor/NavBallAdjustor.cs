@@ -65,6 +65,12 @@ namespace NavBallAdjustor
         private float NBTargetScale = 1f;
 
         /// <summary>
+        /// The NavBall survey navigation vector scale.
+        /// </summary>
+        [Persistent]
+        private float NBNavWaypointScale = 1f;
+
+        /// <summary>
         /// Stock AutoHide NavBall on enter Map View.
         /// </summary>
         [Persistent]
@@ -149,6 +155,11 @@ namespace NavBallAdjustor
         private Transform NavBallAntiTarget = null;
 
         /// <summary>
+        /// The NavBall survey navigation waypoint marker.
+        /// </summary>
+        private Transform NavBallNavWaypoint = null;
+
+        /// <summary>
         /// The NavBall cursor initial scale.
         /// </summary>
         private Vector3 NBCursorInitialScale = new Vector3();
@@ -192,6 +203,11 @@ namespace NavBallAdjustor
         /// Customized horizontal slider style.
         /// </summary>
         private GUIStyle SliderStyle;
+
+        /// <summary>
+        /// The default content color.
+        /// </summary>
+        private Color DefaultContentColor;
 
         /// <summary>
         /// Indicates whether the NavBall is scared now.
@@ -333,6 +349,26 @@ namespace NavBallAdjustor
                 }
             }
         }
+
+        /// <summary>
+        /// Gets or sets the NavBall survey navigation vector scale.
+        /// </summary>
+        private float NavBallNavWaypointScale
+        {
+            get
+            {
+                return this.NBNavWaypointScale;
+            }
+            set
+            {
+                this.NBNavWaypointScale = value;
+
+                if (this.NavBallNavWaypoint != null)
+                {
+                    this.NavBallNavWaypoint.localScale = this.NBVectorsInitialScale * value;
+                }
+            }
+        }
         #endregion
 
         #region Public_Methods
@@ -379,7 +415,7 @@ namespace NavBallAdjustor
             }
 
             // Afraid mouse cursor.
-            if (!FlightDriver.Pause)
+            if (!FlightDriver.Pause && !GameSettings.MODIFIER_KEY.GetKey())
             {
                 if ((this.NBAfraidMouseOnMapView && MapView.MapIsEnabled) ||
                     (this.NBAfraidMouseOnFlightView && !MapView.MapIsEnabled))
@@ -439,6 +475,7 @@ namespace NavBallAdjustor
 
             if (this.SliderStyle == null)
             {
+                this.DefaultContentColor = GUI.contentColor;
                 this.SliderStyle = GUI.skin.horizontalSlider;
                 this.SliderStyle.margin = new RectOffset(0, 0, 9, 0); // add top margin for better look
             }
@@ -474,9 +511,9 @@ namespace NavBallAdjustor
                     NavBallToggle.Instance.panel.Collapse();
                 }
             }
-            else if (!this.NBHideOnMap)
+            else if (!this.NBHideOnMap && !NavBallToggle.Instance.ManeuverModeActive)
             {
-                NavBallToggle.Instance.panel.Expand();
+                NavBallToggle.Instance.overrideButton.onClick.Invoke();
             }
         }
 
@@ -515,6 +552,7 @@ namespace NavBallAdjustor
                 this.NavBallNormalScale = this.NBNormalScale;
                 this.NavBallBurnScale = this.NBBurnScale;
                 this.NavBallTargetScale = this.NBTargetScale;
+                this.NavBallNavWaypointScale = this.NBNavWaypointScale;
             }
 
             // Load toggle details.
@@ -531,18 +569,24 @@ namespace NavBallAdjustor
 
             #if DEBUG
             GUILayout.Box("Debug", GUILayout.ExpandWidth(true));
-            CreateScaleOption("ToggleLeftOffset", this.ToggleLeftOffset, x => this.ToggleLeftOffset = x, minScale: -100f, maxScale: 0f);
-            CreateScaleOption("CursorOffsetX", this.CursorOffsetX, x => this.CursorOffsetX = x, minScale: 0f, maxScale: 10f);
-            CreateScaleOption("CursorOffsetY", this.CursorOffsetY, x => this.CursorOffsetY = x, minScale: 0f, maxScale: 20f);
+            CreateScaleOption(true, "ToggleLeftOffset", this.ToggleLeftOffset, x => this.ToggleLeftOffset = x, minScale: -100f, maxScale: 0f);
+            CreateScaleOption(true, "CursorOffsetX", this.CursorOffsetX, x => this.CursorOffsetX = x, minScale: 0f, maxScale: 10f);
+            CreateScaleOption(true, "CursorOffsetY", this.CursorOffsetY, x => this.CursorOffsetY = x, minScale: 0f, maxScale: 20f);
             #endif
-            
+
+            bool flightVectorsActive =
+                this.NavBallPrograde.gameObject.activeSelf || this.NavBallRetrograde.gameObject.activeSelf ||
+                this.NavBallRadialIn.gameObject.activeSelf || this.NavBallRadialOut.gameObject.activeSelf ||
+                this.NavBallNormal.gameObject.activeSelf || this.NavBallAntiNormal.gameObject.activeSelf;
+
             GUILayout.Box(ModStrings.OptionLabel.Markers, GUILayout.ExpandWidth(true));
-            CreateScaleOption(ModStrings.OptionLabel.Cursor, this.NavBallCursorScale, x => this.NavBallCursorScale = x);
-            CreateScaleOption(ModStrings.OptionLabel.Prograde, this.NavBallProgradeScale, x => this.NavBallProgradeScale = x);
-            CreateScaleOption(ModStrings.OptionLabel.Radial, this.NavBallRadialScale, x => this.NavBallRadialScale = x);
-            CreateScaleOption(ModStrings.OptionLabel.Normal, this.NavBallNormalScale, x => this.NavBallNormalScale = x);
-            CreateScaleOption(ModStrings.OptionLabel.Burn, this.NavBallBurnScale, x => this.NavBallBurnScale = x);
-            CreateScaleOption(ModStrings.OptionLabel.Target, this.NavBallTargetScale, x => this.NavBallTargetScale = x);
+            CreateScaleOption(this.NavBallCursor.gameObject.activeSelf, ModStrings.OptionLabel.Cursor, this.NavBallCursorScale, x => this.NavBallCursorScale = x);
+            CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.Prograde, this.NavBallProgradeScale, x => this.NavBallProgradeScale = x);
+            CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.Radial, this.NavBallRadialScale, x => this.NavBallRadialScale = x);
+            CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.Normal, this.NavBallNormalScale, x => this.NavBallNormalScale = x);
+            CreateScaleOption(OrbitTargeter.HasManeuverNode, ModStrings.OptionLabel.Burn, this.NavBallBurnScale, x => this.NavBallBurnScale = x);
+            CreateScaleOption(FlightGlobals.ActiveVessel.targetObject != null, ModStrings.OptionLabel.Target, this.NavBallTargetScale, x => this.NavBallTargetScale = x);
+            CreateScaleOption(FinePrint.WaypointManager.navIsActive(), ModStrings.OptionLabel.NavWaypoint, this.NavBallNavWaypointScale, x => this.NavBallNavWaypointScale = x);
 
             GUILayout.Box(ModStrings.OptionLabel.Miscellaneous, GUILayout.ExpandWidth(true));
             GUILayout.BeginHorizontal();
@@ -567,18 +611,24 @@ namespace NavBallAdjustor
         /// <summary>
         /// Creates the scale option.
         /// </summary>
+        /// <param name="isActive">If set to <c>true</c> - marker is shown.</param>
         /// <param name="label">The option label.</param>
         /// <param name="scale">The scale.</param>
         /// <param name="setValue">The set value action.</param>
         /// <param name="minScale">The minimum scale.</param>
         /// <param name="maxScale">The maximum scale.</param>
-        private void CreateScaleOption(string label, float scale, Action<float> setValue,
+        private void CreateScaleOption(bool isActive, string label, float scale, Action<float> setValue,
             float minScale = 0f, float maxScale = 3f)
         {
-            GUILayout.BeginHorizontal();
+            GUILayout.BeginHorizontal();            
 
             // Build option label.
+            if (!isActive)
+            {
+                GUI.contentColor = Color.gray;
+            }
             GUILayout.Label(label, GUILayout.MinWidth(150f));
+            GUI.contentColor = this.DefaultContentColor;
 
             // Build slider to change option value.
             setValue(GUILayout.HorizontalSlider(scale, minScale, maxScale, this.SliderStyle, GUI.skin.horizontalSliderThumb, GUILayout.Width(300f)));
@@ -598,7 +648,7 @@ namespace NavBallAdjustor
             {
                 setValue(1f);          
             }
-
+            
             GUILayout.EndHorizontal();
         }
 
@@ -622,6 +672,7 @@ namespace NavBallAdjustor
                 this.NavBallBurn = navBallVectors.FindChild(ModStrings.NavBallTransform.Burn);
                 this.NavBallTarget = navBallVectors.FindChild(ModStrings.NavBallTransform.Target);
                 this.NavBallAntiTarget = navBallVectors.FindChild(ModStrings.NavBallTransform.AntiTarget);
+                this.NavBallNavWaypoint = navBallVectors.FindChild(ModStrings.NavBallTransform.NavWaypoint);
             }            
         }
 

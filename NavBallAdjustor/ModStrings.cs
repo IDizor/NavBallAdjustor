@@ -61,6 +61,11 @@
             public const string Target = "Target & AntiTarget";
 
             /// <summary>
+            /// The survey navigation waypoint label.
+            /// </summary>
+            public const string NavWaypoint = "Survey Nav Waypoint";
+
+            /// <summary>
             /// The miscellaneous label.
             /// </summary>
             public const string Miscellaneous = "Miscellaneous";
@@ -192,6 +197,11 @@
             /// The antitarget vector transform name.
             /// </summary>
             public const string AntiTarget = "RetrogradeWaypoint";
+
+            /// <summary>
+            /// The survey navigation waypoint transform name.
+            /// </summary>
+            public const string NavWaypoint = "NavWaypoint";
         }
     }
 }
