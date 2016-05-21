@@ -42,6 +42,7 @@
     <Reference Include="KSPUtil">
       <HintPath>C:\Games\KSP 1.1.2\KSP_x64_Data\Managed\KSPUtil.dll</HintPath>
     </Reference>
+    <Reference Include="System" />
     <Reference Include="UnityEngine">
       <HintPath>C:\Games\KSP 1.1.2\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
@@ -50,6 +51,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NavBallAdjustor.ColorOptions.cs" />
     <Compile Include="ModStrings.cs" />
     <Compile Include="OptionsToggle.cs" />
     <Compile Include="NavBallHelper.cs" />

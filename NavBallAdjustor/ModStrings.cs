@@ -21,10 +21,55 @@
         public const string OptionsWindowTitle = "NavBall Options";
 
         /// <summary>
+        /// The color options window title.
+        /// </summary>
+        public const string ColorOptionsWindowTitle = "NavBall Markers Colors";
+
+        /// <summary>
         /// String constants for mod options labels.
         /// </summary>
         public static class OptionLabel
         {
+            /// <summary>
+            /// The prograde label.
+            /// </summary>
+            public const string Prograde = "Prograde";
+
+            /// <summary>
+            /// The retrograde label.
+            /// </summary>
+            public const string Retrograde = "Retrograde";
+
+            /// <summary>
+            /// The radial-in label.
+            /// </summary>
+            public const string RadialIn = "Radial In";
+
+            /// <summary>
+            /// The radial-out label.
+            /// </summary>
+            public const string RadialOut = "Radial Out";
+
+            /// <summary>
+            /// The normal label.
+            /// </summary>
+            public const string Normal = "Normal";
+
+            /// <summary>
+            /// The anti-normal label.
+            /// </summary>
+            public const string AntiNormal = "AntiNormal";
+
+            /// <summary>
+            /// The target label.
+            /// </summary>
+            public const string Target = "Target";
+
+            /// <summary>
+            /// The anti-target label.
+            /// </summary>
+            public const string AntiTarget = "AntiTarget";
+
             /// <summary>
             /// The markers scale label.
             /// </summary>
@@ -38,17 +83,17 @@
             /// <summary>
             /// The prograde & retrograde label.
             /// </summary>
-            public const string Prograde = "Prograde & Retrograde";
+            public const string ProgradeRetrograde = "Prograde & Retrograde";
 
             /// <summary>
             /// The radial-in & radial-out label.
             /// </summary>
-            public const string Radial = "Radial In & Out";
+            public const string RadialInOut = "Radial In & Out";
 
             /// <summary>
             /// The normal & anti-normal label.
             /// </summary>
-            public const string Normal = "Normal & AntiNormal";
+            public const string NormalAntiNormal = "Normal & AntiNormal";
 
             /// <summary>
             /// The maneuver burn vector label.
@@ -58,7 +103,7 @@
             /// <summary>
             /// The target & anti-target label.
             /// </summary>
-            public const string Target = "Target & AntiTarget";
+            public const string TargetAntiTarget = "Target & AntiTarget";
 
             /// <summary>
             /// The survey navigation waypoint label.
@@ -110,6 +155,31 @@
             /// The close button.
             /// </summary>
             public const string Close = "Close";
+
+            /// <summary>
+            /// The save and close button.
+            /// </summary>
+            public const string SaveClose = "Save & Close";
+
+            /// <summary>
+            /// The edit colors button.
+            /// </summary>
+            public const string EditColors = "Edit Markers Colors";
+
+            /// <summary>
+            /// The default button.
+            /// </summary>
+            public const string Default = "Default";
+
+            /// <summary>
+            /// The default 1 button.
+            /// </summary>
+            public const string Default1 = "Default 1";
+
+            /// <summary>
+            /// The default 2 button.
+            /// </summary>
+            public const string Default2 = "Default 2";
         }
 
         /// <summary>
@@ -187,6 +257,11 @@
             /// The burn vector transform name.
             /// </summary>
             public const string Burn = "BurnVector";
+
+            /// <summary>
+            /// The burn vector arrow transform name.
+            /// </summary>
+            public const string BurnArrow = "BurnVectorArrow";
 
             /// <summary>
             /// The target vector transform name.

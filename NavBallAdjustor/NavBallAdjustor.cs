@@ -1,4 +1,5 @@
 ﻿using System;
+using FinePrint;
 using KSP.IO;
 using KSP.UI;
 using KSP.UI.Screens.Flight;
@@ -10,7 +11,7 @@ namespace NavBallAdjustor
     /// Implements functionality for NavBallAdjustor KSP mod.
     /// </summary>
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    public class NavBallAdjustor : MonoBehaviour
+    public partial class NavBallAdjustor : MonoBehaviour
     {
         #region Private_Fields
         /// <summary>
@@ -110,7 +111,7 @@ namespace NavBallAdjustor
         private Transform NavBallCursor = null;
 
         /// <summary>
-        /// The NavBall prograde.
+        /// The NavBall prograde marker.
         /// </summary>
         private Transform NavBallPrograde = null;
 
@@ -143,6 +144,11 @@ namespace NavBallAdjustor
         /// The NavBall burn marker.
         /// </summary>
         private Transform NavBallBurn = null;
+
+        /// <summary>
+        /// The NavBall burn arrow marker.
+        /// </summary>
+        private Transform NavBallBurnArrow = null;
 
         /// <summary>
         /// The NavBall target marker.
@@ -180,9 +186,14 @@ namespace NavBallAdjustor
         private bool ShowOptions = false;
 
         /// <summary>
+        /// The mod colors options window display state.
+        /// </summary>
+        private bool ShowColorOptions = false;
+
+        /// <summary>
         /// The mod options window rectangle.
         /// </summary>
-        private Rect ModOptionsRect = new Rect(300, 200, 558, 80);
+        private Rect OptionsWindowRect = new Rect(300, 200, 558, 300);
 
         /// <summary>
         /// The GUI toggle details.
@@ -213,6 +224,11 @@ namespace NavBallAdjustor
         /// Indicates whether the NavBall is scared now.
         /// </summary>
         private bool IsNavBallScared = false;
+
+        /// <summary>
+        /// Indicates whether the nav waypoint color is updated.
+        /// </summary>
+        private bool IsNavWaypointColorUpdated = false;
         #endregion
 
         #region Private_Properties
@@ -378,6 +394,7 @@ namespace NavBallAdjustor
         public void Start()
         {
             this.HashCode = ModStrings.ModName.GetHashCode();
+            this.ColorPickerTexture = GameDatabase.Instance.GetTexture("NavBallAdjustor/Icons/ColorPicker", false);
 
             // Load mod configuration.
             if (File.Exists<NavBallAdjustor>(ModStrings.ConfigFile))
@@ -412,6 +429,7 @@ namespace NavBallAdjustor
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 this.ShowOptions = false;
+                this.ShowColorOptions = false;
             }
 
             // Afraid mouse cursor.
@@ -420,7 +438,7 @@ namespace NavBallAdjustor
                 if ((this.NBAfraidMouseOnMapView && MapView.MapIsEnabled) ||
                     (this.NBAfraidMouseOnFlightView && !MapView.MapIsEnabled))
                 {
-                    if (this.IsPixelAboveNavBall(Mouse.screenPos))
+                    if (this.IsPixelOnNavBall(Mouse.screenPos))
                     {
                         if (NavBallToggle.Instance.panel.expanded)
                         {
@@ -438,6 +456,19 @@ namespace NavBallAdjustor
                 {
                     this.IsNavBallScared = false;
                     NavBallToggle.Instance.panel.Expand();
+                }
+            }
+
+            // Update nav waypoint color.
+            if (WaypointManager.navIsActive() != this.IsNavWaypointColorUpdated)
+            {
+                this.IsNavWaypointColorUpdated = WaypointManager.navIsActive();
+
+                if (this.IsNavWaypointColorUpdated)
+                {
+                    this.NavWaypointMaterial.SetColor(PropertyIDs._TintColor, this.ShowColorOptions && this.NavWaypointSelected
+                        ? this.NewColor
+                        : this.NavWaypointColor);
                 }
             }
         }
@@ -478,22 +509,35 @@ namespace NavBallAdjustor
                 this.DefaultContentColor = GUI.contentColor;
                 this.SliderStyle = GUI.skin.horizontalSlider;
                 this.SliderStyle.margin = new RectOffset(0, 0, 9, 0); // add top margin for better look
+                this.ColorOptionsLabelsOffsetStyle = new GUIStyle
+                {
+                    margin = new RectOffset((int)(this.ColorPickerRect.xMin + this.ColorPickerRect.width + 10), 0, 0, 0)
+                };
             }
 
-            if (HighLogic.LoadedSceneIsFlight)
-            {
-                this.ShowOptions = !FlightDriver.Pause && GUI.Toggle(
-                    this.Toggle.Rectangle,
-                    this.ShowOptions,
-                    GUIContent.none,
-                    this.Toggle.Style);
-            }
+            bool toggleResult = !FlightDriver.Pause && GUI.Toggle(
+                this.Toggle.Rectangle,
+                this.ShowOptions || this.ShowColorOptions,
+                GUIContent.none,
+                this.Toggle.Style);
 
-            if (this.ShowOptions && CameraManager.Instance.currentCameraMode != CameraManager.CameraMode.IVA)
+            this.ShowOptions = toggleResult && !this.ShowColorOptions;
+            this.ShowColorOptions = toggleResult && !this.ShowOptions;
+            
+            if (CameraManager.Instance.currentCameraMode != CameraManager.CameraMode.IVA)
             {
-                // Display mod options window.
-                this.ModOptionsRect = GUILayout.Window(
-                    this.HashCode, this.ModOptionsRect, ModOptionsWindow, ModStrings.OptionsWindowTitle);
+                if (this.ShowOptions)
+                {
+                    // Display mod options window.
+                    this.OptionsWindowRect = GUILayout.Window(
+                        this.HashCode, this.OptionsWindowRect, OptionsWindow, ModStrings.OptionsWindowTitle);
+                }
+                else if (this.ShowColorOptions)
+                {
+                    // Display mod colors options window.
+                    this.ColorsWindowRect = GUILayout.Window(
+                        this.HashCode + 1, this.ColorsWindowRect, ColorOptionsWindow, ModStrings.ColorOptionsWindowTitle);
+                }
             }
         }
         #endregion
@@ -545,14 +589,8 @@ namespace NavBallAdjustor
                 this.NBCursorInitialPosition = this.NavBallCursor.localPosition;
                 this.NBVectorsInitialScale = this.NavBallPrograde.localScale;
 
-                // Apply scale
-                this.ScaleNavBallCursor(this.NavBallCursorScale);
-                this.NavBallProgradeScale = this.NBProgradeScale;
-                this.NavBallRadialScale = this.NBRadialScale;
-                this.NavBallNormalScale = this.NBNormalScale;
-                this.NavBallBurnScale = this.NBBurnScale;
-                this.NavBallTargetScale = this.NBTargetScale;
-                this.NavBallNavWaypointScale = this.NBNavWaypointScale;
+                this.ApplyLoadedScales();
+                this.ApplyLoadedColors();
             }
 
             // Load toggle details.
@@ -563,15 +601,15 @@ namespace NavBallAdjustor
         /// Builds mod options window.
         /// </summary>
         /// <param name="windowID">The window identifier.</param>
-        private void ModOptionsWindow(int windowID)
+        private void OptionsWindow(int windowID)
         {
             GUILayout.BeginVertical();
 
             #if DEBUG
             GUILayout.Box("Debug", GUILayout.ExpandWidth(true));
-            CreateScaleOption(true, "ToggleLeftOffset", this.ToggleLeftOffset, x => this.ToggleLeftOffset = x, minScale: -100f, maxScale: 0f);
-            CreateScaleOption(true, "CursorOffsetX", this.CursorOffsetX, x => this.CursorOffsetX = x, minScale: 0f, maxScale: 10f);
-            CreateScaleOption(true, "CursorOffsetY", this.CursorOffsetY, x => this.CursorOffsetY = x, minScale: 0f, maxScale: 20f);
+            this.CreateScaleOption(true, "ToggleLeftOffset", this.ToggleLeftOffset, x => this.ToggleLeftOffset = x, minScale: -100f, maxScale: 0f);
+            this.CreateScaleOption(true, "CursorOffsetX", this.CursorOffsetX, x => this.CursorOffsetX = x, minScale: 0f, maxScale: 10f);
+            this.CreateScaleOption(true, "CursorOffsetY", this.CursorOffsetY, x => this.CursorOffsetY = x, minScale: 0f, maxScale: 20f);
             #endif
 
             bool flightVectorsActive =
@@ -580,15 +618,34 @@ namespace NavBallAdjustor
                 this.NavBallNormal.gameObject.activeSelf || this.NavBallAntiNormal.gameObject.activeSelf;
 
             GUILayout.Box(ModStrings.OptionLabel.Markers, GUILayout.ExpandWidth(true));
-            CreateScaleOption(this.NavBallCursor.gameObject.activeSelf, ModStrings.OptionLabel.Cursor, this.NavBallCursorScale, x => this.NavBallCursorScale = x);
-            CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.Prograde, this.NavBallProgradeScale, x => this.NavBallProgradeScale = x);
-            CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.Radial, this.NavBallRadialScale, x => this.NavBallRadialScale = x);
-            CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.Normal, this.NavBallNormalScale, x => this.NavBallNormalScale = x);
-            CreateScaleOption(OrbitTargeter.HasManeuverNode, ModStrings.OptionLabel.Burn, this.NavBallBurnScale, x => this.NavBallBurnScale = x);
-            CreateScaleOption(FlightGlobals.ActiveVessel.targetObject != null, ModStrings.OptionLabel.Target, this.NavBallTargetScale, x => this.NavBallTargetScale = x);
-            CreateScaleOption(FinePrint.WaypointManager.navIsActive(), ModStrings.OptionLabel.NavWaypoint, this.NavBallNavWaypointScale, x => this.NavBallNavWaypointScale = x);
+            this.CreateScaleOption(this.NavBallCursor.gameObject.activeSelf, ModStrings.OptionLabel.Cursor,
+                this.NavBallCursorScale, x => this.NavBallCursorScale = x);
+            this.CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.ProgradeRetrograde,
+                this.NavBallProgradeScale, x => this.NavBallProgradeScale = x);
+            this.CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.RadialInOut,
+                this.NavBallRadialScale, x => this.NavBallRadialScale = x);
+            this.CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.NormalAntiNormal,
+                this.NavBallNormalScale, x => this.NavBallNormalScale = x);
+            this.CreateScaleOption(OrbitTargeter.HasManeuverNode, ModStrings.OptionLabel.Burn,
+                this.NavBallBurnScale, x => this.NavBallBurnScale = x);
+            this.CreateScaleOption(FlightGlobals.ActiveVessel.targetObject != null, ModStrings.OptionLabel.TargetAntiTarget,
+                this.NavBallTargetScale, x => this.NavBallTargetScale = x);
+            this.CreateScaleOption(WaypointManager.navIsActive(), ModStrings.OptionLabel.NavWaypoint,
+                this.NavBallNavWaypointScale, x => this.NavBallNavWaypointScale = x);
 
             GUILayout.Box(ModStrings.OptionLabel.Miscellaneous, GUILayout.ExpandWidth(true));
+
+            if (GUILayout.Button(ModStrings.Button.EditColors))
+            {
+                this.ProgradeSelected = true;
+                this.SendColorToPicker(this.ProgradeMaterial.GetColor(PropertyIDs._TintColor));
+
+                this.ShowOptions = false;
+                this.ShowColorOptions = true;
+
+                return;
+            }
+
             GUILayout.BeginHorizontal();
             this.NBHideOnMap = GUILayout.Toggle(this.NBHideOnMap, ModStrings.OptionLabel.HideOnMap, GUILayout.MaxWidth(300f));
             this.NBAfraidMouseOnMapView = GUILayout.Toggle(this.NBAfraidMouseOnMapView, ModStrings.OptionLabel.AfraidMouseOnMap);
@@ -599,12 +656,11 @@ namespace NavBallAdjustor
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(ModStrings.Button.Save)) SaveConfig();
+            if (GUILayout.Button(ModStrings.Button.Save)) this.SaveConfig();
             this.ShowOptions = !GUILayout.Button(ModStrings.Button.Close);
             GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
-
             GUI.DragWindow();
         }
 
@@ -631,7 +687,7 @@ namespace NavBallAdjustor
             GUI.contentColor = this.DefaultContentColor;
 
             // Build slider to change option value.
-            setValue(GUILayout.HorizontalSlider(scale, minScale, maxScale, this.SliderStyle, GUI.skin.horizontalSliderThumb, GUILayout.Width(300f)));
+            setValue(GUILayout.HorizontalSlider(scale, minScale, maxScale, GUILayout.Width(300f)));
             
             // Build option value label.
             if (IsDebug)
@@ -670,9 +726,22 @@ namespace NavBallAdjustor
                 this.NavBallNormal = navBallVectors.FindChild(ModStrings.NavBallTransform.Normal);
                 this.NavBallAntiNormal = navBallVectors.FindChild(ModStrings.NavBallTransform.AntiNormal);
                 this.NavBallBurn = navBallVectors.FindChild(ModStrings.NavBallTransform.Burn);
+                this.NavBallBurnArrow = navBallVectors.FindChild(ModStrings.NavBallTransform.BurnArrow);
                 this.NavBallTarget = navBallVectors.FindChild(ModStrings.NavBallTransform.Target);
                 this.NavBallAntiTarget = navBallVectors.FindChild(ModStrings.NavBallTransform.AntiTarget);
                 this.NavBallNavWaypoint = navBallVectors.FindChild(ModStrings.NavBallTransform.NavWaypoint);
+
+                this.ProgradeMaterial = this.NavBallPrograde.GetComponent<MeshRenderer>().materials[0];
+                this.RetrogradeMaterial = this.NavBallRetrograde.GetComponent<MeshRenderer>().materials[0];
+                this.RadialInMaterial = this.NavBallRadialIn.GetComponent<MeshRenderer>().materials[0];
+                this.RadialOutMaterial = this.NavBallRadialOut.GetComponent<MeshRenderer>().materials[0];
+                this.NormalMaterial = this.NavBallNormal.GetComponent<MeshRenderer>().materials[0];
+                this.AntiNormalMaterial = this.NavBallAntiNormal.GetComponent<MeshRenderer>().materials[0];
+                this.BurnMaterial = this.NavBallBurn.GetComponent<MeshRenderer>().materials[0];
+                this.BurnArrowMaterial = this.NavBallBurnArrow.GetComponent<MeshRenderer>().materials[0];
+                this.TargetMaterial = this.NavBallTarget.GetComponent<MeshRenderer>().materials[0];
+                this.AntiTargetMaterial = this.NavBallAntiTarget.GetComponent<MeshRenderer>().materials[0];
+                this.NavWaypointMaterial = this.NavBallNavWaypoint.GetComponent<MeshRenderer>().materials[0];
             }            
         }
 
@@ -694,11 +763,11 @@ namespace NavBallAdjustor
         }
 
         /// <summary>
-        /// Determines whether the pixel located above NavBall texture.
+        /// Determines whether the pixel located on NavBall texture.
         /// </summary>
         /// <param name="point">The pixel location.</param>
-        /// <returns>True when pixel located above NavBall texture, otherwise False.</returns>
-        private bool IsPixelAboveNavBall(Vector2 point)
+        /// <returns>True when pixel located on NavBall texture, otherwise False.</returns>
+        private bool IsPixelOnNavBall(Vector2 point)
         {
             return (point.y > GameSettings.SCREEN_RESOLUTION_HEIGHT - this.NBall.TextureCurrentHeight) &&
                 (point.x > this.NBall.TransformScreenCenterX - (NavBallHelper.TextureHalfWidth * this.NBall.Scale.x * GameSettings.UI_SCALE)) &&
@@ -712,6 +781,20 @@ namespace NavBallAdjustor
         private bool IsCameraTurnedOn()
         {
             return UIVectorCamera.Camera == Camera.current;
+        }
+
+        /// <summary>
+        /// Applies the loaded scales.
+        /// </summary>
+        private void ApplyLoadedScales()
+        {
+            this.ScaleNavBallCursor(this.NavBallCursorScale);
+            this.NavBallProgradeScale = this.NBProgradeScale;
+            this.NavBallRadialScale = this.NBRadialScale;
+            this.NavBallNormalScale = this.NBNormalScale;
+            this.NavBallBurnScale = this.NBBurnScale;
+            this.NavBallTargetScale = this.NBTargetScale;
+            this.NavBallNavWaypointScale = this.NBNavWaypointScale;
         }
         #endregion
     }
