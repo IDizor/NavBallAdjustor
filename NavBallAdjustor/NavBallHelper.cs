@@ -60,7 +60,7 @@ namespace NavBallAdjustor
         {
             get
             {
-                return FlightUIModeController.Instance.navBall.panelTransform.position;
+                return this.NavBall.transform.position;
             }
         }
 

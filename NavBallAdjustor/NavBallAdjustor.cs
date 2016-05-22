@@ -486,8 +486,7 @@ namespace NavBallAdjustor
 
             // Check if NavBall position changed.
             if (this.PrevNavBallPosX != this.NBall.Position.x
-                || this.PrevNavBallPosY != this.NBall.Position.y
-                || IsDebug)
+                || this.PrevNavBallPosY != this.NBall.Position.y)
             {
                 this.PrevNavBallPosX = this.NBall.Position.x;
                 this.PrevNavBallPosY = this.NBall.Position.y;
@@ -515,17 +514,17 @@ namespace NavBallAdjustor
                 };
             }
 
-            if (CameraManager.Instance.currentCameraMode != CameraManager.CameraMode.IVA)
-            {
-                bool toggleResult = !FlightDriver.Pause && GUI.Toggle(
+            bool toggleResult = !FlightDriver.Pause && GUI.Toggle(
                     this.Toggle.Rectangle,
                     this.ShowOptions || this.ShowColorOptions,
                     GUIContent.none,
                     this.Toggle.Style);
 
-                this.ShowOptions = toggleResult && !this.ShowColorOptions;
-                this.ShowColorOptions = toggleResult && !this.ShowOptions;
+            this.ShowOptions = toggleResult && !this.ShowColorOptions;
+            this.ShowColorOptions = toggleResult && !this.ShowOptions;
 
+            if (CameraManager.Instance.currentCameraMode != CameraManager.CameraMode.IVA)
+            {
                 if (this.ShowOptions)
                 {
                     // Display mod options window.

@@ -641,8 +641,8 @@ namespace NavBallAdjustor
 
             if (GUI.RepeatButton(this.ColorPickerRect, this.ColorPickerTexture, GUIStyle.none))
             {
-                int x = (int)(Mouse.screenPos.x - this.OptionsWindowRect.xMin - this.ColorPickerRect.xMin);
-                int y = (int)(Mouse.screenPos.y - this.OptionsWindowRect.yMin - this.ColorPickerRect.yMin);
+                int x = (int)(Mouse.screenPos.x - this.ColorsWindowRect.xMin - this.ColorPickerRect.xMin);
+                int y = (int)(Mouse.screenPos.y - this.ColorsWindowRect.yMin - this.ColorPickerRect.yMin);
 
                 this.NewColor = this.ColorPickerTexture.GetPixel(x, -y);
                 this.FillTexture(ref this.NewColorTexture, this.NewColor);
