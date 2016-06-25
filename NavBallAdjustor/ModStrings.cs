@@ -108,7 +108,7 @@
             /// <summary>
             /// The survey navigation waypoint label.
             /// </summary>
-            public const string NavWaypoint = "Survey Nav Waypoint";
+            public const string NavWaypoint = "Survey Waypoint";
 
             /// <summary>
             /// The miscellaneous label.
@@ -276,7 +276,7 @@
             /// <summary>
             /// The survey navigation waypoint transform name.
             /// </summary>
-            public const string NavWaypoint = "NavWaypoint";
+            public const string NavWaypoint = "NavWaypointVisual";
         }
     }
 }

@@ -424,7 +424,9 @@ namespace NavBallAdjustor
                     ProgradeSelected = RetrogradeSelected = RadialInSelected = RadialOutSelected = NormalSelected =
                         AntiNormalSelected = BurnSelected = TargetSelected = AntiTargetSelected = false;
 
-                    this.SendColorToPicker(this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor));
+                    this.SendColorToPicker(this.NavWaypointMaterial == null
+                        ? this.NavWaypointColor
+                        : this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor));
                 }
 
                 this._NavWaypointSelected = value;
@@ -590,7 +592,10 @@ namespace NavBallAdjustor
 
             // Nav Waypoint
             GUILayout.BeginHorizontal();
-            GUI.contentColor = this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor);
+            GUI.contentColor = this.NavWaypointMaterial == null
+                ? this.NavWaypointColor
+                : this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor);
+
             if (GUILayout.Toggle(this.NavWaypointSelected, ModStrings.OptionLabel.NavWaypoint, GUILayout.MinWidth(147f)) && !this.NavWaypointSelected)
             {
                 this.NavWaypointSelected = true;
@@ -598,14 +603,22 @@ namespace NavBallAdjustor
             GUI.contentColor = this.DefaultNavWaypointColor1;
             if (GUILayout.Button(ModStrings.Button.Default1))
             {
-                this.NavWaypointMaterial.SetColor(PropertyIDs._TintColor, this.DefaultNavWaypointColor1);
+                if (this.NavWaypointMaterial != null)
+                {
+                    this.NavWaypointMaterial.SetColor(PropertyIDs._TintColor, this.DefaultNavWaypointColor1);
+                }
+
                 this.NavWaypointColor = this.DefaultNavWaypointColor1;
                 if (this.NavWaypointSelected) this.SendColorToPicker(this.DefaultNavWaypointColor1);
             }
             GUI.contentColor = this.DefaultNavWaypointColor2;
             if (GUILayout.Button(ModStrings.Button.Default2))
             {
-                this.NavWaypointMaterial.SetColor(PropertyIDs._TintColor, this.DefaultNavWaypointColor2);
+                if (this.NavWaypointMaterial != null)
+                {
+                    this.NavWaypointMaterial.SetColor(PropertyIDs._TintColor, this.DefaultNavWaypointColor2);
+                }
+
                 this.NavWaypointColor = this.DefaultNavWaypointColor2;
                 if (this.NavWaypointSelected) this.SendColorToPicker(this.DefaultNavWaypointColor2);
             }
@@ -626,7 +639,11 @@ namespace NavBallAdjustor
                 this.BurnColor = this.BurnMaterial.GetColor(PropertyIDs._TintColor);
                 this.TargetColor = this.TargetMaterial.GetColor(PropertyIDs._TintColor);
                 this.AntiTargetColor = this.AntiTargetMaterial.GetColor(PropertyIDs._TintColor);
-                this.NavWaypointColor = this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor);
+
+                if (this.NavWaypointMaterial != null)
+                {
+                    this.NavWaypointColor = this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor);
+                }
 
                 this.SaveConfig();
                 this.ShowColorOptions = false;
@@ -653,6 +670,13 @@ namespace NavBallAdjustor
             // Prev & New colors preview
             GUI.Box(this.PrevColorRect, this.PrevColorTexture, GUIStyle.none);
             GUI.Box(this.NewColorRect, this.NewColorTexture, GUIStyle.none);
+
+            if (GUI.Button(this.PrevColorRect, string.Empty, GUIStyle.none))
+            {
+                this.NewColor = this.PrevColor;
+                this.FillTexture(ref this.NewColorTexture, this.NewColor);
+                this.ApplyNewColor();
+            }
 
             GUILayout.EndVertical();
             GUI.DragWindow();
@@ -713,7 +737,10 @@ namespace NavBallAdjustor
             }
             else if (this.NavWaypointSelected)
             {
-                this.NavWaypointMaterial.SetColor(PropertyIDs._TintColor, this.NewColor);
+                if (this.NavWaypointMaterial != null)
+                {
+                    this.NavWaypointMaterial.SetColor(PropertyIDs._TintColor, this.NewColor);
+                }
 
                 // For nav waypoint we should always set savable variable,
                 // since the game does reset nav waypoint material color on set waypoint event.
@@ -808,13 +835,16 @@ namespace NavBallAdjustor
                 this.AntiTargetColor = this.AntiTargetMaterial.GetColor(PropertyIDs._TintColor);
             }
 
-            if (this.NavWaypointColor != this.ZeroColor)
+            if (this.NavWaypointMaterial != null)
             {
-                this.NavWaypointMaterial.SetColor(PropertyIDs._TintColor, this.NavWaypointColor);
-            }
-            else
-            {
-                this.NavWaypointColor = this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor);
+                if (this.NavWaypointColor != this.ZeroColor)
+                {
+                    this.NavWaypointMaterial.SetColor(PropertyIDs._TintColor, this.NavWaypointColor);
+                }
+                else
+                {
+                    this.NavWaypointColor = this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor);
+                }
             }
         }
     }

@@ -460,15 +460,23 @@ namespace NavBallAdjustor
             }
 
             // Update nav waypoint color.
-            if (WaypointManager.navIsActive() != this.IsNavWaypointColorUpdated)
+            bool navWaypointIsActive = this.NavWaypointIsActive();
+
+            if (navWaypointIsActive != this.IsNavWaypointColorUpdated)
             {
-                this.IsNavWaypointColorUpdated = WaypointManager.navIsActive();
+                this.IsNavWaypointColorUpdated = navWaypointIsActive;
 
                 if (this.IsNavWaypointColorUpdated)
                 {
+                    this.PopulateNavWaypointMarker();
+
+                    // Apply color
                     this.NavWaypointMaterial.SetColor(PropertyIDs._TintColor, this.ShowColorOptions && this.NavWaypointSelected
                         ? this.NewColor
                         : this.NavWaypointColor);
+
+                    // Apply scale
+                    this.NavBallNavWaypointScale = this.NBNavWaypointScale;
                 }
             }
         }
@@ -581,7 +589,7 @@ namespace NavBallAdjustor
 
             this.NBall = new NavBallHelper();
             this.PopulateNavBallMarkers();
-
+            
             if (this.NavBallCursor != null)
             {
                 this.NBCursorInitialScale = this.NavBallCursor.localScale;
@@ -594,6 +602,22 @@ namespace NavBallAdjustor
 
             // Load toggle details.
             this.Toggle = new OptionsToggle();
+        }
+
+        /// <summary>
+        /// Checks if navigation waypoint is active.
+        /// </summary>
+        /// <returns>True or False.</returns>
+        private bool NavWaypointIsActive()
+        {
+            if (!HighLogic.LoadedSceneIsFlight)
+            {
+                return false;
+            }
+
+            NavWaypoint nav = (UnityEngine.Object.FindObjectOfType(typeof(NavWaypoint)) as NavWaypoint);
+            
+            return nav != null && nav.IsActive;
         }
 
         /// <summary>
@@ -629,7 +653,7 @@ namespace NavBallAdjustor
                 this.NavBallBurnScale, x => this.NavBallBurnScale = x);
             this.CreateScaleOption(FlightGlobals.ActiveVessel.targetObject != null, ModStrings.OptionLabel.TargetAntiTarget,
                 this.NavBallTargetScale, x => this.NavBallTargetScale = x);
-            this.CreateScaleOption(WaypointManager.navIsActive(), ModStrings.OptionLabel.NavWaypoint,
+            this.CreateScaleOption(this.NavWaypointIsActive(), ModStrings.OptionLabel.NavWaypoint,
                 this.NavBallNavWaypointScale, x => this.NavBallNavWaypointScale = x);
 
             GUILayout.Box(ModStrings.OptionLabel.Miscellaneous, GUILayout.ExpandWidth(true));
@@ -713,10 +737,11 @@ namespace NavBallAdjustor
         private void PopulateNavBallMarkers()
         {
             Transform navBall = FlightUIModeController.Instance.navBall.transform.FindChild(ModStrings.NavBallTransform.NavBall);
-            Transform navBallVectors = navBall.FindChild(ModStrings.NavBallTransform.Vectors);
 
             if (navBall != null)
             {
+                Transform navBallVectors = navBall.FindChild(ModStrings.NavBallTransform.Vectors);
+
                 this.NavBallCursor = navBall.FindChild(ModStrings.NavBallTransform.Cursor);
                 this.NavBallPrograde = navBallVectors.FindChild(ModStrings.NavBallTransform.Prograde);
                 this.NavBallRetrograde = navBallVectors.FindChild(ModStrings.NavBallTransform.Retrograde);
@@ -728,8 +753,7 @@ namespace NavBallAdjustor
                 this.NavBallBurnArrow = navBallVectors.FindChild(ModStrings.NavBallTransform.BurnArrow);
                 this.NavBallTarget = navBallVectors.FindChild(ModStrings.NavBallTransform.Target);
                 this.NavBallAntiTarget = navBallVectors.FindChild(ModStrings.NavBallTransform.AntiTarget);
-                this.NavBallNavWaypoint = navBallVectors.FindChild(ModStrings.NavBallTransform.NavWaypoint);
-
+                
                 this.ProgradeMaterial = this.NavBallPrograde.GetComponent<MeshRenderer>().materials[0];
                 this.RetrogradeMaterial = this.NavBallRetrograde.GetComponent<MeshRenderer>().materials[0];
                 this.RadialInMaterial = this.NavBallRadialIn.GetComponent<MeshRenderer>().materials[0];
@@ -740,8 +764,36 @@ namespace NavBallAdjustor
                 this.BurnArrowMaterial = this.NavBallBurnArrow.GetComponent<MeshRenderer>().materials[0];
                 this.TargetMaterial = this.NavBallTarget.GetComponent<MeshRenderer>().materials[0];
                 this.AntiTargetMaterial = this.NavBallAntiTarget.GetComponent<MeshRenderer>().materials[0];
-                this.NavWaypointMaterial = this.NavBallNavWaypoint.GetComponent<MeshRenderer>().materials[0];
             }            
+        }
+
+        /// <summary>
+        /// Populates the navigation waypoint marker.
+        /// </summary>
+        private void PopulateNavWaypointMarker()
+        {
+            Transform navBall = FlightUIModeController.Instance.navBall.transform.FindChild(ModStrings.NavBallTransform.NavBall);
+
+            if (navBall != null)
+            {
+                Transform navBallVectors = navBall.FindChild(ModStrings.NavBallTransform.Vectors);
+
+                this.NavBallNavWaypoint = navBallVectors.FindChild(ModStrings.NavBallTransform.NavWaypoint);
+
+                if (this.NavBallNavWaypoint != null)
+                {
+                    this.NavWaypointMaterial = this.NavBallNavWaypoint.GetComponent<MeshRenderer>().materials[0];
+                }
+                else
+                {
+                    this.NavWaypointMaterial = null;
+                }
+            }
+            else
+            {
+                this.NavBallNavWaypoint = null;
+                this.NavWaypointMaterial = null;
+            }
         }
 
         /// <summary>
@@ -793,7 +845,6 @@ namespace NavBallAdjustor
             this.NavBallNormalScale = this.NBNormalScale;
             this.NavBallBurnScale = this.NBBurnScale;
             this.NavBallTargetScale = this.NBTargetScale;
-            this.NavBallNavWaypointScale = this.NBNavWaypointScale;
         }
         #endregion
     }
