@@ -229,6 +229,16 @@ namespace NavBallAdjustor
         /// Indicates whether the nav waypoint color is updated.
         /// </summary>
         private bool IsNavWaypointColorUpdated = false;
+
+        /// <summary>
+        /// Indicates whether the previously found nav waypoint is active.
+        /// </summary>
+        private bool IsNavWaypointActivePrevValue = false;
+
+        /// <summary>
+        /// The nav waypoint check counter.
+        /// </summary>
+        private byte NavWaypointCheckCounter = 0;
         #endregion
 
         #region Private_Properties
@@ -615,9 +625,20 @@ namespace NavBallAdjustor
                 return false;
             }
 
-            NavWaypoint nav = (UnityEngine.Object.FindObjectOfType(typeof(NavWaypoint)) as NavWaypoint);
-            
-            return nav != null && nav.IsActive;
+            this.NavWaypointCheckCounter++;
+
+            if (this.NavWaypointCheckCounter < 10)
+            {
+                return this.IsNavWaypointActivePrevValue;
+            }
+            else
+            {
+                this.NavWaypointCheckCounter = 0;
+                NavWaypoint nav = NavWaypoint.fetch;
+                this.IsNavWaypointActivePrevValue = nav != null && nav.IsActive;
+
+                return this.IsNavWaypointActivePrevValue;
+            }
         }
 
         /// <summary>
