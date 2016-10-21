@@ -627,7 +627,7 @@ namespace NavBallAdjustor
 
             this.NavWaypointCheckCounter++;
 
-            if (this.NavWaypointCheckCounter < 10)
+            if (this.NavWaypointCheckCounter < 20)
             {
                 return this.IsNavWaypointActivePrevValue;
             }
