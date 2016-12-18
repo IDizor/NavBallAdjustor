@@ -96,6 +96,24 @@ namespace NavBallAdjustor
         private bool NBAfraidMouseOnFlightView = false;
 
         /// <summary>
+        /// The NavBall ghost markers feature.
+        /// </summary>
+        [Persistent]
+        private bool NBGhostMarkersEnabled = false;
+
+        /// <summary>
+        /// The NavBall ghost markers opacity.
+        /// </summary>
+        [Persistent]
+        private float NBGhostMarkersOpacity = 0.3f;
+
+        /// <summary>
+        /// The NavBall ghost markers scale.
+        /// </summary>
+        [Persistent]
+        private float NBGhostMarkersScale = 0.5f;
+
+        /// <summary>
         /// The mod hash code.
         /// </summary>
         private int HashCode;
@@ -229,16 +247,6 @@ namespace NavBallAdjustor
         /// Indicates whether the nav waypoint color is updated.
         /// </summary>
         private bool IsNavWaypointColorUpdated = false;
-
-        /// <summary>
-        /// Indicates whether the previously found nav waypoint is active.
-        /// </summary>
-        private bool IsNavWaypointActivePrevValue = false;
-
-        /// <summary>
-        /// The nav waypoint check counter.
-        /// </summary>
-        private byte NavWaypointCheckCounter = 0;
         #endregion
 
         #region Private_Properties
@@ -395,6 +403,31 @@ namespace NavBallAdjustor
                 }
             }
         }
+
+        /// <summary>
+        /// Gets a value indicating whether active vessel has maneuver nodes with some delta v.
+        /// </summary>
+        private bool HasManeuverNode
+        {
+            get
+            {
+                return FlightGlobals.ActiveVessel != null
+                    && FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes.Count > 0
+                    && FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes[0].DeltaV != Vector3d.zero;
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether active vessel has navigation waypoint.
+        /// </summary>
+        private bool HasNavWaypoint
+        {
+            get
+            {
+                return HighLogic.LoadedSceneIsFlight
+                    && FlightGlobals.ActiveVessel?.navigationWaypoint != null;
+            }
+        }
         #endregion
 
         #region Public_Methods
@@ -427,7 +460,8 @@ namespace NavBallAdjustor
         }
 
         /// <summary>
-        /// Called on update MonoBehaviour frame.
+        /// Update is called once per frame.
+        /// It is the main workhorse function for frame updates.
         /// </summary>
         public void Update()
         {
@@ -470,7 +504,7 @@ namespace NavBallAdjustor
             }
 
             // Update nav waypoint color.
-            bool navWaypointIsActive = this.NavWaypointIsActive();
+            bool navWaypointIsActive = HasNavWaypoint;
 
             if (navWaypointIsActive != this.IsNavWaypointColorUpdated)
             {
@@ -492,7 +526,9 @@ namespace NavBallAdjustor
         }
 
         /// <summary>
-        /// Called on GUI tick.
+        /// Called multiple times per frame in response to GUI events.
+        /// The Layout and Repaint events are processed first,followed
+        /// by a Layout and keyboard/mouse event for each input event.
         /// </summary>
         public void OnGUI()
         {
@@ -557,6 +593,51 @@ namespace NavBallAdjustor
                 }
             }
         }
+
+        /// <summary>
+        /// Called once per frame, after Update has finished.
+        /// </summary>
+        public void LateUpdate()
+        {
+            // Ghost Markers
+            if (this.NBGhostMarkersEnabled && FlightGlobals.ActiveVessel != null)
+            {
+                if (FlightGlobals.ActiveVessel.speed > 0.1)
+                {
+                    this.UpdateGhostMarker(this.ProgradeMaterial, this.NavBallPrograde, this.NBProgradeScale);
+                    this.UpdateGhostMarker(this.RetrogradeMaterial, this.NavBallRetrograde, this.NBProgradeScale);
+
+                    if (FlightGlobals.speedDisplayMode == FlightGlobals.SpeedDisplayModes.Orbit)
+                    {
+                        this.UpdateGhostMarker(this.RadialInMaterial, this.NavBallRadialIn, this.NBRadialScale);
+                        this.UpdateGhostMarker(this.RadialOutMaterial, this.NavBallRadialOut, this.NBRadialScale);
+                        this.UpdateGhostMarker(this.NormalMaterial, this.NavBallNormal, this.NBNormalScale);
+                        this.UpdateGhostMarker(this.AntiNormalMaterial, this.NavBallAntiNormal, this.NBNormalScale);
+                    }
+                }
+
+                if (HasManeuverNode)
+                {
+                    this.UpdateGhostMarker(this.BurnMaterial, this.NavBallBurn, this.NBBurnScale, isBurnMarker: true);
+                }
+
+                if (FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes.Count > 0)
+                {
+                    this.BurnArrowMaterial.SetFloat(PropertyIDs._Opacity, 0.0001f);
+                }
+
+                if (FlightGlobals.ActiveVessel.targetObject != null)
+                {
+                    this.UpdateGhostMarker(this.TargetMaterial, this.NavBallTarget, this.NBTargetScale);
+                    this.UpdateGhostMarker(this.AntiTargetMaterial, this.NavBallAntiTarget, this.NBTargetScale);
+                }
+
+                if (HasNavWaypoint)
+                {
+                    this.UpdateGhostMarker(this.NavWaypointMaterial, this.NavBallNavWaypoint, this.NBNavWaypointScale);
+                }
+            }
+        }
         #endregion
 
         #region Private_Methods
@@ -615,33 +696,6 @@ namespace NavBallAdjustor
         }
 
         /// <summary>
-        /// Checks if navigation waypoint is active.
-        /// </summary>
-        /// <returns>True or False.</returns>
-        private bool NavWaypointIsActive()
-        {
-            if (!HighLogic.LoadedSceneIsFlight)
-            {
-                return false;
-            }
-
-            this.NavWaypointCheckCounter++;
-
-            if (this.NavWaypointCheckCounter < 20)
-            {
-                return this.IsNavWaypointActivePrevValue;
-            }
-            else
-            {
-                this.NavWaypointCheckCounter = 0;
-                NavWaypoint nav = NavWaypoint.fetch;
-                this.IsNavWaypointActivePrevValue = nav != null && nav.IsActive;
-
-                return this.IsNavWaypointActivePrevValue;
-            }
-        }
-
-        /// <summary>
         /// Builds mod options window.
         /// </summary>
         /// <param name="windowID">The window identifier.</param>
@@ -649,35 +703,55 @@ namespace NavBallAdjustor
         {
             GUILayout.BeginVertical();
 
-            #if DEBUG
-            GUILayout.Box("Debug", GUILayout.ExpandWidth(true));
-            this.CreateScaleOption(true, "ToggleLeftOffset", this.ToggleLeftOffset, x => this.ToggleLeftOffset = x, minScale: -100f, maxScale: 0f);
-            this.CreateScaleOption(true, "CursorOffsetX", this.CursorOffsetX, x => this.CursorOffsetX = x, minScale: 0f, maxScale: 10f);
-            this.CreateScaleOption(true, "CursorOffsetY", this.CursorOffsetY, x => this.CursorOffsetY = x, minScale: 0f, maxScale: 20f);
-            #endif
+            if (IsDebug)
+            {
+                GUILayout.Box("Debug", GUILayout.ExpandWidth(true));
+                this.CreateScaleOption(true, "ToggleLeftOffset", this.ToggleLeftOffset, x => this.ToggleLeftOffset = x, minScale: -100f, maxScale: 0f);
+                this.CreateScaleOption(true, "CursorOffsetX", this.CursorOffsetX, x => this.CursorOffsetX = x, minScale: 0f, maxScale: 10f);
+                this.CreateScaleOption(true, "CursorOffsetY", this.CursorOffsetY, x => this.CursorOffsetY = x, minScale: 0f, maxScale: 20f);
+            }
 
-            bool flightVectorsActive =
-                this.NavBallPrograde.gameObject.activeSelf || this.NavBallRetrograde.gameObject.activeSelf ||
-                this.NavBallRadialIn.gameObject.activeSelf || this.NavBallRadialOut.gameObject.activeSelf ||
-                this.NavBallNormal.gameObject.activeSelf || this.NavBallAntiNormal.gameObject.activeSelf;
+            bool flightVectorsActive = FlightGlobals.ActiveVessel != null && FlightGlobals.ActiveVessel.speed > 0.1;
+            bool orbitVectorsActive = FlightGlobals.speedDisplayMode == FlightGlobals.SpeedDisplayModes.Orbit;
 
-            GUILayout.Box(ModStrings.OptionLabel.Markers, GUILayout.ExpandWidth(true));
+            // Markers Scale
+            GUILayout.Box(ModStrings.OptionLabel.MarkersScaleSection, GUILayout.ExpandWidth(true));
             this.CreateScaleOption(this.NavBallCursor.gameObject.activeSelf, ModStrings.OptionLabel.Cursor,
                 this.NavBallCursorScale, x => this.NavBallCursorScale = x);
             this.CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.ProgradeRetrograde,
                 this.NavBallProgradeScale, x => this.NavBallProgradeScale = x);
-            this.CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.RadialInOut,
+            this.CreateScaleOption(orbitVectorsActive, ModStrings.OptionLabel.RadialInOut,
                 this.NavBallRadialScale, x => this.NavBallRadialScale = x);
-            this.CreateScaleOption(flightVectorsActive, ModStrings.OptionLabel.NormalAntiNormal,
+            this.CreateScaleOption(orbitVectorsActive, ModStrings.OptionLabel.NormalAntiNormal,
                 this.NavBallNormalScale, x => this.NavBallNormalScale = x);
-            this.CreateScaleOption(OrbitTargeter.HasManeuverNode, ModStrings.OptionLabel.Burn,
+            this.CreateScaleOption(HasManeuverNode, ModStrings.OptionLabel.Burn,
                 this.NavBallBurnScale, x => this.NavBallBurnScale = x);
-            this.CreateScaleOption(FlightGlobals.ActiveVessel.targetObject != null, ModStrings.OptionLabel.TargetAntiTarget,
+            this.CreateScaleOption(FlightGlobals.ActiveVessel?.targetObject != null, ModStrings.OptionLabel.TargetAntiTarget,
                 this.NavBallTargetScale, x => this.NavBallTargetScale = x);
-            this.CreateScaleOption(this.NavWaypointIsActive(), ModStrings.OptionLabel.NavWaypoint,
+            this.CreateScaleOption(HasNavWaypoint, ModStrings.OptionLabel.NavWaypoint,
                 this.NavBallNavWaypointScale, x => this.NavBallNavWaypointScale = x);
 
-            GUILayout.Box(ModStrings.OptionLabel.Miscellaneous, GUILayout.ExpandWidth(true));
+            // Ghost Markers
+            GUILayout.Box(ModStrings.OptionLabel.GhostMarkersSection, GUILayout.ExpandWidth(true));
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            bool ghostMarkersEnabled = GUILayout.Toggle(this.NBGhostMarkersEnabled, ModStrings.OptionLabel.EnableGhostMarkers);
+            if (this.NBGhostMarkersEnabled && !ghostMarkersEnabled)
+            {
+                // fix maneuver markers on disable ghost markers
+                this.BurnArrowMaterial.SetFloat(PropertyIDs._Opacity, 1f);
+                this.BurnMaterial.SetFloat(PropertyIDs._Opacity, 1f);
+            }
+            this.NBGhostMarkersEnabled = ghostMarkersEnabled;
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            this.CreateScaleOption(this.NBGhostMarkersEnabled, ModStrings.OptionLabel.GhostMarkersOpacity,
+                this.NBGhostMarkersOpacity, x => this.NBGhostMarkersOpacity = x, minScale: 0f, maxScale: 1f, defaultValue: 0.3f);
+            this.CreateScaleOption(this.NBGhostMarkersEnabled, ModStrings.OptionLabel.GhostMarkersScale,
+                this.NBGhostMarkersScale, x => this.NBGhostMarkersScale = x, defaultValue: 0.5f);
+
+            // Miscellaneous
+            GUILayout.Box(ModStrings.OptionLabel.MiscellaneousSection, GUILayout.ExpandWidth(true));
 
             if (GUILayout.Button(ModStrings.Button.EditColors))
             {
@@ -718,7 +792,7 @@ namespace NavBallAdjustor
         /// <param name="minScale">The minimum scale.</param>
         /// <param name="maxScale">The maximum scale.</param>
         private void CreateScaleOption(bool isActive, string label, float scale, Action<float> setValue,
-            float minScale = 0f, float maxScale = 3f)
+            float minScale = 0f, float maxScale = 3f, float defaultValue = 1f)
         {
             GUILayout.BeginHorizontal();            
 
@@ -746,7 +820,7 @@ namespace NavBallAdjustor
             // Build option Reset button.
             if (GUILayout.Button(ModStrings.Button.Reset))
             {
-                setValue(1f);          
+                setValue(defaultValue);          
             }
             
             GUILayout.EndHorizontal();
@@ -866,6 +940,42 @@ namespace NavBallAdjustor
             this.NavBallNormalScale = this.NBNormalScale;
             this.NavBallBurnScale = this.NBBurnScale;
             this.NavBallTargetScale = this.NBTargetScale;
+        }
+
+        /// <summary>
+        /// Updates Ghost Marker opacity and activity.
+        /// </summary>
+        /// <param name="material">Marker material.</param>
+        /// <param name="transform">Marker transform.</param>
+        /// <param name="currentScale">Marker current scale.</param>
+        private void UpdateGhostMarker(Material material, Transform transform, float? currentScale = null, bool isBurnMarker = false)
+        {
+            if (material != null && transform != null)
+            {
+                if (isBurnMarker)
+                {
+                    material.SetFloat(PropertyIDs._Opacity, this.NavBallBurnArrow.gameObject.activeSelf ? this.NBGhostMarkersOpacity : 1f);
+                }
+                else if (material.GetFloat(PropertyIDs._Opacity) < this.NBGhostMarkersOpacity)
+                {
+                    material.SetFloat(PropertyIDs._Opacity, this.NBGhostMarkersOpacity);
+                }
+
+                if (currentScale != null)
+                {
+                    float multiplier = (1.00001f - material.GetFloat(PropertyIDs._Opacity)) / (1.00001f - this.NBGhostMarkersOpacity);
+                    // =1-((1-A1)^(1/2))
+                    multiplier = 1 - (float)Math.Sqrt(1 - multiplier);
+                    float ghostScale = 1 - (multiplier * (1 - this.NBGhostMarkersScale));
+
+                    transform.localScale = this.NBVectorsInitialScale * currentScale.Value * ghostScale;
+                }
+
+                if (!transform.gameObject.activeSelf)
+                {
+                    transform.gameObject.SetActive(true);
+                }
+            }
         }
         #endregion
     }

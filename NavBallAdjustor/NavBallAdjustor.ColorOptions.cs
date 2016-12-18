@@ -592,9 +592,9 @@ namespace NavBallAdjustor
 
             // Nav Waypoint
             GUILayout.BeginHorizontal();
-            GUI.contentColor = this.NavWaypointMaterial == null
-                ? this.NavWaypointColor
-                : this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor);
+            GUI.contentColor = HasNavWaypoint
+                ? this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor)
+                : this.NavWaypointColor;
 
             if (GUILayout.Toggle(this.NavWaypointSelected, ModStrings.OptionLabel.NavWaypoint, GUILayout.MinWidth(147f)) && !this.NavWaypointSelected)
             {
@@ -640,7 +640,7 @@ namespace NavBallAdjustor
                 this.TargetColor = this.TargetMaterial.GetColor(PropertyIDs._TintColor);
                 this.AntiTargetColor = this.AntiTargetMaterial.GetColor(PropertyIDs._TintColor);
 
-                if (this.NavWaypointMaterial != null)
+                if (HasNavWaypoint && this.NavWaypointMaterial != null)
                 {
                     this.NavWaypointColor = this.NavWaypointMaterial.GetColor(PropertyIDs._TintColor);
                 }
@@ -835,7 +835,7 @@ namespace NavBallAdjustor
                 this.AntiTargetColor = this.AntiTargetMaterial.GetColor(PropertyIDs._TintColor);
             }
 
-            if (this.NavWaypointMaterial != null)
+            if (HasNavWaypoint && this.NavWaypointMaterial != null)
             {
                 if (this.NavWaypointColor != this.ZeroColor)
                 {

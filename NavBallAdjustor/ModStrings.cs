@@ -71,9 +71,9 @@
             public const string AntiTarget = "AntiTarget";
 
             /// <summary>
-            /// The markers scale label.
+            /// The markers scale section label.
             /// </summary>
-            public const string Markers = "Markers Scale";
+            public const string MarkersScaleSection = "Markers Scale";
 
             /// <summary>
             /// The cursor label.
@@ -111,9 +111,29 @@
             public const string NavWaypoint = "Survey Waypoint";
 
             /// <summary>
-            /// The miscellaneous label.
+            /// The ghost markers label.
             /// </summary>
-            public const string Miscellaneous = "Miscellaneous";
+            public const string GhostMarkersSection = "Ghost Markers";
+
+            /// <summary>
+            /// The ghost markers toggle label.
+            /// </summary>
+            public const string EnableGhostMarkers = "Enable Ghost Markers";
+
+            /// <summary>
+            /// The ghost markers opacity label.
+            /// </summary>
+            public const string GhostMarkersOpacity = "Ghost Markers Opacity";
+
+            /// <summary>
+            /// The ghost markers scale label.
+            /// </summary>
+            public const string GhostMarkersScale = "Ghost Markers Scale";
+
+            /// <summary>
+            /// The miscellaneous section label.
+            /// </summary>
+            public const string MiscellaneousSection = "Miscellaneous";
 
             /// <summary>
             /// The hide NavBall on map label.
@@ -277,6 +297,11 @@
             /// The survey navigation waypoint transform name.
             /// </summary>
             public const string NavWaypoint = "NavWaypointVisual";
+
+            /// <summary>
+            /// Maneuver delta v tarnsform path.
+            /// </summary>
+            public const string DeltaVReadOut = "IVAEVACollapseGroup/DeltaVGauge/dVGauge/deltaVreadout";
         }
     }
 }
