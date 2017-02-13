@@ -407,13 +407,25 @@ namespace NavBallAdjustor
         /// <summary>
         /// Gets a value indicating whether active vessel has maneuver nodes with some delta v.
         /// </summary>
+        private bool HasNonZeroManeuverNode
+        {
+            get
+            {
+                return this.HasManeuverNode
+                    && FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes[0].DeltaV != Vector3d.zero;
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether active vessel has maneuver node.
+        /// </summary>
         private bool HasManeuverNode
         {
             get
             {
                 return FlightGlobals.ActiveVessel != null
-                    && FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes.Count > 0
-                    && FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes[0].DeltaV != Vector3d.zero;
+                    && FlightGlobals.ActiveVessel.patchedConicSolver != null
+                    && FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes.Count > 0;
             }
         }
 
@@ -602,40 +614,7 @@ namespace NavBallAdjustor
             // Ghost Markers
             if (this.NBGhostMarkersEnabled && FlightGlobals.ActiveVessel != null)
             {
-                if (FlightGlobals.ActiveVessel.speed > 0.1)
-                {
-                    this.UpdateGhostMarker(this.ProgradeMaterial, this.NavBallPrograde, this.NBProgradeScale);
-                    this.UpdateGhostMarker(this.RetrogradeMaterial, this.NavBallRetrograde, this.NBProgradeScale);
-
-                    if (FlightGlobals.speedDisplayMode == FlightGlobals.SpeedDisplayModes.Orbit)
-                    {
-                        this.UpdateGhostMarker(this.RadialInMaterial, this.NavBallRadialIn, this.NBRadialScale);
-                        this.UpdateGhostMarker(this.RadialOutMaterial, this.NavBallRadialOut, this.NBRadialScale);
-                        this.UpdateGhostMarker(this.NormalMaterial, this.NavBallNormal, this.NBNormalScale);
-                        this.UpdateGhostMarker(this.AntiNormalMaterial, this.NavBallAntiNormal, this.NBNormalScale);
-                    }
-                }
-
-                if (HasManeuverNode)
-                {
-                    this.UpdateGhostMarker(this.BurnMaterial, this.NavBallBurn, this.NBBurnScale, isBurnMarker: true);
-                }
-
-                if (FlightGlobals.ActiveVessel.patchedConicSolver.maneuverNodes.Count > 0)
-                {
-                    this.BurnArrowMaterial.SetFloat(PropertyIDs._Opacity, 0.0001f);
-                }
-
-                if (FlightGlobals.ActiveVessel.targetObject != null)
-                {
-                    this.UpdateGhostMarker(this.TargetMaterial, this.NavBallTarget, this.NBTargetScale);
-                    this.UpdateGhostMarker(this.AntiTargetMaterial, this.NavBallAntiTarget, this.NBTargetScale);
-                }
-
-                if (HasNavWaypoint)
-                {
-                    this.UpdateGhostMarker(this.NavWaypointMaterial, this.NavBallNavWaypoint, this.NBNavWaypointScale);
-                }
+                this.UpdateGhostMarkers();
             }
         }
         #endregion
@@ -724,7 +703,7 @@ namespace NavBallAdjustor
                 this.NavBallRadialScale, x => this.NavBallRadialScale = x);
             this.CreateScaleOption(orbitVectorsActive, ModStrings.OptionLabel.NormalAntiNormal,
                 this.NavBallNormalScale, x => this.NavBallNormalScale = x);
-            this.CreateScaleOption(HasManeuverNode, ModStrings.OptionLabel.Burn,
+            this.CreateScaleOption(HasNonZeroManeuverNode, ModStrings.OptionLabel.Burn,
                 this.NavBallBurnScale, x => this.NavBallBurnScale = x);
             this.CreateScaleOption(FlightGlobals.ActiveVessel?.targetObject != null, ModStrings.OptionLabel.TargetAntiTarget,
                 this.NavBallTargetScale, x => this.NavBallTargetScale = x);
@@ -940,6 +919,47 @@ namespace NavBallAdjustor
             this.NavBallNormalScale = this.NBNormalScale;
             this.NavBallBurnScale = this.NBBurnScale;
             this.NavBallTargetScale = this.NBTargetScale;
+        }
+
+        /// <summary>
+        /// Updates Ghosts Markers visibility.
+        /// </summary>
+        private void UpdateGhostMarkers()
+        {
+            if (FlightGlobals.ActiveVessel.speed > 0.1)
+            {
+                this.UpdateGhostMarker(this.ProgradeMaterial, this.NavBallPrograde, this.NBProgradeScale);
+                this.UpdateGhostMarker(this.RetrogradeMaterial, this.NavBallRetrograde, this.NBProgradeScale);
+
+                if (FlightGlobals.speedDisplayMode == FlightGlobals.SpeedDisplayModes.Orbit)
+                {
+                    this.UpdateGhostMarker(this.RadialInMaterial, this.NavBallRadialIn, this.NBRadialScale);
+                    this.UpdateGhostMarker(this.RadialOutMaterial, this.NavBallRadialOut, this.NBRadialScale);
+                    this.UpdateGhostMarker(this.NormalMaterial, this.NavBallNormal, this.NBNormalScale);
+                    this.UpdateGhostMarker(this.AntiNormalMaterial, this.NavBallAntiNormal, this.NBNormalScale);
+                }
+            }
+
+            if (HasNonZeroManeuverNode)
+            {
+                this.UpdateGhostMarker(this.BurnMaterial, this.NavBallBurn, this.NBBurnScale, isBurnMarker: true);
+            }
+
+            if (this.HasManeuverNode)
+            {
+                this.BurnArrowMaterial.SetFloat(PropertyIDs._Opacity, 0.0001f);
+            }
+
+            if (FlightGlobals.ActiveVessel.targetObject != null)
+            {
+                this.UpdateGhostMarker(this.TargetMaterial, this.NavBallTarget, this.NBTargetScale);
+                this.UpdateGhostMarker(this.AntiTargetMaterial, this.NavBallAntiTarget, this.NBTargetScale);
+            }
+
+            if (HasNavWaypoint)
+            {
+                this.UpdateGhostMarker(this.NavWaypointMaterial, this.NavBallNavWaypoint, this.NBNavWaypointScale);
+            }
         }
 
         /// <summary>
