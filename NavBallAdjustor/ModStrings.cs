@@ -26,6 +26,11 @@
         public const string ColorOptionsWindowTitle = "NavBall Markers Colors";
 
         /// <summary>
+        /// The priorities options window title.
+        /// </summary>
+        public const string PrioritiesOptionsWindowTitle = "NavBall Markers Overlapping Priorities";
+
+        /// <summary>
         /// String constants for mod options labels.
         /// </summary>
         public static class OptionLabel
@@ -154,6 +159,11 @@
             /// The afraid mouse cursor on flight label.
             /// </summary>
             public const string AfraidMouseOnFlight = "Afraid mouse cursor on Flight View";
+
+            /// <summary>
+            /// The markers priorities toggle label.
+            /// </summary>
+            public const string EnableMarkersPriorities = "Enable Priorities";
         }
 
         /// <summary>
@@ -177,14 +187,19 @@
             public const string Close = "Close";
 
             /// <summary>
-            /// The save and close button.
+            /// The OK button.
             /// </summary>
-            public const string SaveClose = "Save & Close";
+            public const string OK = "OK";
 
             /// <summary>
             /// The edit colors button.
             /// </summary>
             public const string EditColors = "Edit Markers Colors";
+
+            /// <summary>
+            /// The edit colors button.
+            /// </summary>
+            public const string EditPriorities = "Edit Markers Overlapping Priorities";
 
             /// <summary>
             /// The default button.

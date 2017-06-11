@@ -1,5 +1,5 @@
 ﻿using System;
-using FinePrint;
+using System.Collections.Generic;
 using KSP.IO;
 using KSP.UI;
 using KSP.UI.Screens.Flight;
@@ -199,14 +199,19 @@ namespace NavBallAdjustor
         private Vector3 NBCursorInitialPosition = new Vector3();
 
         /// <summary>
-        /// The mod options window display state.
+        /// The options window display state.
         /// </summary>
         private bool ShowOptions = false;
 
         /// <summary>
-        /// The mod colors options window display state.
+        /// The colors options window display state.
         /// </summary>
         private bool ShowColorOptions = false;
+
+        /// <summary>
+        /// The markers priorities options window display state.
+        /// </summary>
+        private bool ShowPriorityOptions = false;
 
         /// <summary>
         /// The mod options window rectangle.
@@ -486,6 +491,7 @@ namespace NavBallAdjustor
             {
                 this.ShowOptions = false;
                 this.ShowColorOptions = false;
+                this.ShowPriorityOptions = false;
             }
 
             // Afraid mouse cursor.
@@ -582,12 +588,13 @@ namespace NavBallAdjustor
 
             bool toggleResult = !FlightDriver.Pause && GUI.Toggle(
                     this.Toggle.Rectangle,
-                    this.ShowOptions || this.ShowColorOptions,
+                    this.ShowOptions || this.ShowColorOptions || this.ShowPriorityOptions,
                     GUIContent.none,
                     this.Toggle.Style);
 
-            this.ShowOptions = toggleResult && !this.ShowColorOptions;
-            this.ShowColorOptions = toggleResult && !this.ShowOptions;
+            this.ShowOptions = toggleResult && !this.ShowColorOptions && !this.ShowPriorityOptions;
+            this.ShowColorOptions = toggleResult && !this.ShowOptions && !this.ShowPriorityOptions;
+            this.ShowPriorityOptions = toggleResult && !this.ShowOptions && !this.ShowColorOptions;
 
             if (CameraManager.Instance.currentCameraMode != CameraManager.CameraMode.IVA)
             {
@@ -603,6 +610,12 @@ namespace NavBallAdjustor
                     this.ColorsWindowRect = GUILayout.Window(
                         this.HashCode + 1, this.ColorsWindowRect, ColorOptionsWindow, ModStrings.ColorOptionsWindowTitle);
                 }
+                else if (this.ShowPriorityOptions)
+                {
+                    // Display mod colors options window.
+                    this.PrioritiesWindowRect = GUILayout.Window(
+                        this.HashCode + 2, this.PrioritiesWindowRect, PrioritiesOptionsWindow, ModStrings.PrioritiesOptionsWindowTitle);
+                }
             }
         }
 
@@ -615,6 +628,81 @@ namespace NavBallAdjustor
             if (this.NBGhostMarkersEnabled && FlightGlobals.ActiveVessel != null)
             {
                 this.UpdateGhostMarkers();
+            }
+
+            // Markers Priorities
+            if (this.NBMarkersPrioritiesEnabled)
+            {
+                var maxIndex = this.NBMarkersPriorities.Count - 1;
+
+                for (var i = 0; i < this.NBMarkersPriorities.Count; i++)
+                {
+                    float increment = (maxIndex - i) * -10f;
+
+                    switch (this.NBMarkersPriorities[i])
+                    {
+                        case MarkerType.Prograde:
+                            if (NavBallPrograde != null)
+                            {
+                                NavBallPrograde.localPosition = NavBallPrograde.localPosition.z > 0
+                                    ? NavBallPrograde.localPosition.AddZ(increment)
+                                    : NavBallPrograde.localPosition.SetZ(113f);
+                                NavBallRetrograde.localPosition = NavBallRetrograde.localPosition.z > 0
+                                    ? NavBallRetrograde.localPosition.AddZ(increment)
+                                    : NavBallRetrograde.localPosition.SetZ(113f);
+                            }
+                            break;
+                        case MarkerType.Radial:
+                            if (NavBallRadialIn != null)
+                            {
+                                NavBallRadialIn.localPosition = NavBallRadialIn.localPosition.z > 0
+                                    ? NavBallRadialIn.localPosition.AddZ(increment)
+                                    : NavBallRadialIn.localPosition.SetZ(113f);
+                                NavBallRadialOut.localPosition = NavBallRadialOut.localPosition.z > 0
+                                    ? NavBallRadialOut.localPosition.AddZ(increment)
+                                    : NavBallRadialOut.localPosition.SetZ(113f);
+                            }
+                            break;
+                        case MarkerType.Normal:
+                            if (NavBallNormal != null)
+                            {
+                                NavBallNormal.localPosition = NavBallNormal.localPosition.z > 0
+                                    ? NavBallNormal.localPosition.AddZ(increment)
+                                    : NavBallNormal.localPosition.SetZ(113f);
+                                NavBallAntiNormal.localPosition = NavBallAntiNormal.localPosition.z > 0
+                                    ? NavBallAntiNormal.localPosition.AddZ(increment)
+                                    : NavBallAntiNormal.localPosition.SetZ(113f);
+                            }
+                            break;
+                        case MarkerType.Target:
+                            if (NavBallTarget != null)
+                            {
+                                NavBallTarget.localPosition = NavBallTarget.localPosition.z > 0
+                                    ? NavBallTarget.localPosition.AddZ(increment)
+                                    : NavBallTarget.localPosition.SetZ(113f);
+                                NavBallAntiTarget.localPosition = NavBallAntiTarget.localPosition.z > 0
+                                    ? NavBallAntiTarget.localPosition.AddZ(increment)
+                                    : NavBallAntiTarget.localPosition.SetZ(113f);
+                            }
+                            break;
+                        case MarkerType.Burn:
+                            if (NavBallBurn != null)
+                            {
+                                NavBallBurn.localPosition = NavBallBurn.localPosition.z > 0
+                                    ? NavBallBurn.localPosition.AddZ(increment)
+                                    : NavBallBurn.localPosition.SetZ(113f);
+                            }
+                            break;
+                        case MarkerType.Waypoint:
+                            if (NavBallNavWaypoint != null)
+                            {
+                                NavBallNavWaypoint.localPosition = NavBallNavWaypoint.localPosition.z > 0
+                                    ? NavBallNavWaypoint.localPosition.AddZ(increment)
+                                    : NavBallNavWaypoint.localPosition.SetZ(113f);
+                            }
+                            break;
+                    }
+                }
             }
         }
         #endregion
@@ -675,7 +763,7 @@ namespace NavBallAdjustor
         }
 
         /// <summary>
-        /// Builds mod options window.
+        /// Builds options window.
         /// </summary>
         /// <param name="windowID">The window identifier.</param>
         private void OptionsWindow(int windowID)
@@ -732,16 +820,27 @@ namespace NavBallAdjustor
             // Miscellaneous
             GUILayout.Box(ModStrings.OptionLabel.MiscellaneousSection, GUILayout.ExpandWidth(true));
 
-            if (GUILayout.Button(ModStrings.Button.EditColors))
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(ModStrings.Button.EditColors, GUILayout.MinWidth(266f)))
             {
                 this.ProgradeSelected = true;
                 this.SendColorToPicker(this.ProgradeMaterial.GetColor(PropertyIDs._TintColor));
 
                 this.ShowOptions = false;
                 this.ShowColorOptions = true;
+                this.ShowPriorityOptions = false;
 
                 return;
             }
+            if (GUILayout.Button(ModStrings.Button.EditPriorities, GUILayout.MinWidth(266f)))
+            {
+                this.ShowOptions = false;
+                this.ShowColorOptions = false;
+                this.ShowPriorityOptions = true;
+
+                return;
+            }
+            GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             this.NBHideOnMap = GUILayout.Toggle(this.NBHideOnMap, ModStrings.OptionLabel.HideOnMap, GUILayout.MaxWidth(300f));
@@ -753,8 +852,8 @@ namespace NavBallAdjustor
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(ModStrings.Button.Save)) this.SaveConfig();
-            this.ShowOptions = !GUILayout.Button(ModStrings.Button.Close);
+            if (GUILayout.Button(ModStrings.Button.Save, GUILayout.MinWidth(266f))) this.SaveConfig();
+            this.ShowOptions = !GUILayout.Button(ModStrings.Button.Close, GUILayout.MinWidth(266f));
             GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
@@ -930,7 +1029,7 @@ namespace NavBallAdjustor
             {
                 this.UpdateGhostMarker(this.ProgradeMaterial, this.NavBallPrograde, this.NBProgradeScale);
                 this.UpdateGhostMarker(this.RetrogradeMaterial, this.NavBallRetrograde, this.NBProgradeScale);
-
+                
                 if (FlightGlobals.speedDisplayMode == FlightGlobals.SpeedDisplayModes.Orbit)
                 {
                     this.UpdateGhostMarker(this.RadialInMaterial, this.NavBallRadialIn, this.NBRadialScale);
@@ -940,7 +1039,7 @@ namespace NavBallAdjustor
                 }
             }
 
-            if (HasNonZeroManeuverNode)
+            if (this.HasNonZeroManeuverNode)
             {
                 this.UpdateGhostMarker(this.BurnMaterial, this.NavBallBurn, this.NBBurnScale, isBurnMarker: true);
             }

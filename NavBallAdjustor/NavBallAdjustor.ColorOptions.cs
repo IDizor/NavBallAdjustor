@@ -70,7 +70,7 @@ namespace NavBallAdjustor
         /// <summary>
         /// The zero color.
         /// </summary>
-        private Color ZeroColor;
+        private Color ZeroColor = new Color();
 
         /// <summary>
         /// The colors window rectangle.
@@ -457,7 +457,7 @@ namespace NavBallAdjustor
         }
 
         /// <summary>
-        /// Colors the options window.
+        /// Displays colors options window.
         /// </summary>
         /// <param name="windowID">The window identifier.</param>
         private void ColorOptionsWindow(int windowID)
@@ -628,7 +628,7 @@ namespace NavBallAdjustor
 
             // Save & Close
             GUILayout.Space(90f);
-            if (GUILayout.Button(ModStrings.Button.SaveClose))
+            if (GUILayout.Button(ModStrings.Button.Save))
             {
                 this.ProgradeColor = this.ProgradeMaterial.GetColor(PropertyIDs._TintColor);
                 this.RetrogradeColor = this.RetrogradeMaterial.GetColor(PropertyIDs._TintColor);
