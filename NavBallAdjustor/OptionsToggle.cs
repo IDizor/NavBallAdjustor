@@ -11,7 +11,7 @@ namespace NavBallAdjustor
         /// <summary>
         /// The "toggle off" texture.
         /// </summary>
-        private static Texture2D OffTexture;
+        public static Texture2D OffTexture;
 
         /// <summary>
         /// The "toggle on" texture.
@@ -150,10 +150,10 @@ namespace NavBallAdjustor
         /// </summary>
         public OptionsToggle()
         {
-            OffTexture = GameDatabase.Instance.GetTexture(ModStrings.OptionsToggle.IconOffPath, false);
-            OnTexture = GameDatabase.Instance.GetTexture(ModStrings.OptionsToggle.IconOnPath, false);
-            PushTexture = GameDatabase.Instance.GetTexture(ModStrings.OptionsToggle.IconPushPath, false);
-            
+            OffTexture = LinuxGuruGamer.GetTexture(ModStrings.OptionsToggle.IconOffPath);
+            OnTexture = LinuxGuruGamer.GetTexture(ModStrings.OptionsToggle.IconOnPath);
+            PushTexture = LinuxGuruGamer.GetTexture(ModStrings.OptionsToggle.IconPushPath);
+
             this.Style = new GUIStyle();
             this.Style.normal.background = OffTexture;
             this.Style.hover.background = OnTexture;

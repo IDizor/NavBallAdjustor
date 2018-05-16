@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace NavBallAdjustor
@@ -90,9 +86,10 @@ namespace NavBallAdjustor
             }
 
             GUI.contentColor = this.DefaultContentColor;
-            
+
+            GUILayout.Space(10f);
+
             GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
             if (GUILayout.Button(ModStrings.Button.Save, GUILayout.MinWidth(100f)))
             {
                 this.SaveConfig();
@@ -100,7 +97,15 @@ namespace NavBallAdjustor
 
                 return;
             }
-            GUILayout.FlexibleSpace();
+            if (GUILayout.Button(ModStrings.Button.Cancel, GUILayout.MinWidth(100f)))
+            {
+                this.ShowPriorityOptions = false;
+                this.LoadConfig();
+                this.ApplyLoadedScales();
+                this.ApplyLoadedColors();
+
+                return;
+            }
             GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using KSP.IO;
 using KSP.UI;
 using KSP.UI.Screens.Flight;
@@ -454,14 +453,9 @@ namespace NavBallAdjustor
         public void Start()
         {
             this.HashCode = ModStrings.ModName.GetHashCode();
-            this.ColorPickerTexture = GameDatabase.Instance.GetTexture("NavBallAdjustor/Icons/ColorPicker", false);
+            this.ColorPickerTexture = LinuxGuruGamer.GetTexture("NavBallAdjustor/Icons/ColorPicker");
 
-            // Load mod configuration.
-            if (File.Exists<NavBallAdjustor>(ModStrings.ConfigFile))
-            {
-                ConfigNode config = ConfigNode.Load(IOUtils.GetFilePathFor(this.GetType(), ModStrings.ConfigFile));
-                ConfigNode.LoadObjectFromConfig(this, config);
-            }
+            LoadConfig();
 
             GameEvents.onLevelWasLoaded.Add(OnLevelLoaded);
             MapView.OnEnterMapView += OnEnterMap;
@@ -587,10 +581,10 @@ namespace NavBallAdjustor
             }
 
             bool toggleResult = !FlightDriver.Pause && GUI.Toggle(
-                    this.Toggle.Rectangle,
-                    this.ShowOptions || this.ShowColorOptions || this.ShowPriorityOptions,
-                    GUIContent.none,
-                    this.Toggle.Style);
+                this.Toggle.Rectangle,
+                this.ShowOptions || this.ShowColorOptions || this.ShowPriorityOptions,
+                GUIContent.none,
+                this.Toggle.Style);
 
             this.ShowOptions = toggleResult && !this.ShowColorOptions && !this.ShowPriorityOptions;
             this.ShowColorOptions = toggleResult && !this.ShowOptions && !this.ShowPriorityOptions;
@@ -727,6 +721,18 @@ namespace NavBallAdjustor
         }
 
         /// <summary>
+        /// Loads the mod configuration.
+        /// </summary>
+        public void LoadConfig()
+        {
+            if (File.Exists<NavBallAdjustor>(ModStrings.ConfigFile))
+            {
+                ConfigNode config = ConfigNode.Load(IOUtils.GetFilePathFor(this.GetType(), ModStrings.ConfigFile));
+                ConfigNode.LoadObjectFromConfig(this, config);
+            }
+        }
+
+        /// <summary>
         /// Saves the mod configuration.
         /// </summary>
         private void SaveConfig()
@@ -843,17 +849,27 @@ namespace NavBallAdjustor
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            this.NBHideOnMap = GUILayout.Toggle(this.NBHideOnMap, ModStrings.OptionLabel.HideOnMap, GUILayout.MaxWidth(300f));
+            this.NBHideOnMap = GUILayout.Toggle(this.NBHideOnMap, ModStrings.OptionLabel.HideOnMap, GUILayout.MaxWidth(285f));
             this.NBAfraidMouseOnMapView = GUILayout.Toggle(this.NBAfraidMouseOnMapView, ModStrings.OptionLabel.AfraidMouseOnMap);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            this.NBAlwaysHideOnMap = GUILayout.Toggle(this.NBAlwaysHideOnMap, ModStrings.OptionLabel.AlwaysHideOnMap, GUILayout.MaxWidth(300f));            
+            this.NBAlwaysHideOnMap = GUILayout.Toggle(this.NBAlwaysHideOnMap, ModStrings.OptionLabel.AlwaysHideOnMap, GUILayout.MaxWidth(285f));            
             this.NBAfraidMouseOnFlightView = GUILayout.Toggle(this.NBAfraidMouseOnFlightView, ModStrings.OptionLabel.AfraidMouseOnFlight);
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(ModStrings.Button.Save, GUILayout.MinWidth(266f))) this.SaveConfig();
-            this.ShowOptions = !GUILayout.Button(ModStrings.Button.Close, GUILayout.MinWidth(266f));
+            if (GUILayout.Button(ModStrings.Button.Save, GUILayout.MinWidth(266f)))
+            {
+                this.ShowOptions = false;
+                this.SaveConfig();
+            }
+            if (GUILayout.Button(ModStrings.Button.Cancel, GUILayout.MinWidth(266f)))
+            {
+                this.ShowOptions = false;
+                this.LoadConfig();
+                this.ApplyLoadedScales();
+                this.ApplyLoadedColors();
+            }
             GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
@@ -909,23 +925,23 @@ namespace NavBallAdjustor
         /// </summary>
         private void PopulateNavBallMarkers()
         {
-            Transform navBall = FlightUIModeController.Instance.navBall.transform.FindChild(ModStrings.NavBallTransform.NavBall);
+            Transform navBall = FlightUIModeController.Instance.navBall.transform.Find(ModStrings.NavBallTransform.NavBall);
 
             if (navBall != null)
             {
-                Transform navBallVectors = navBall.FindChild(ModStrings.NavBallTransform.Vectors);
+                Transform navBallVectors = navBall.Find(ModStrings.NavBallTransform.Vectors);
 
-                this.NavBallCursor = navBall.FindChild(ModStrings.NavBallTransform.Cursor);
-                this.NavBallPrograde = navBallVectors.FindChild(ModStrings.NavBallTransform.Prograde);
-                this.NavBallRetrograde = navBallVectors.FindChild(ModStrings.NavBallTransform.Retrograde);
-                this.NavBallRadialIn = navBallVectors.FindChild(ModStrings.NavBallTransform.RadialIn);
-                this.NavBallRadialOut = navBallVectors.FindChild(ModStrings.NavBallTransform.RadialOut);
-                this.NavBallNormal = navBallVectors.FindChild(ModStrings.NavBallTransform.Normal);
-                this.NavBallAntiNormal = navBallVectors.FindChild(ModStrings.NavBallTransform.AntiNormal);
-                this.NavBallBurn = navBallVectors.FindChild(ModStrings.NavBallTransform.Burn);
-                this.NavBallBurnArrow = navBallVectors.FindChild(ModStrings.NavBallTransform.BurnArrow);
-                this.NavBallTarget = navBallVectors.FindChild(ModStrings.NavBallTransform.Target);
-                this.NavBallAntiTarget = navBallVectors.FindChild(ModStrings.NavBallTransform.AntiTarget);
+                this.NavBallCursor = navBall.Find(ModStrings.NavBallTransform.Cursor);
+                this.NavBallPrograde = navBallVectors.Find(ModStrings.NavBallTransform.Prograde);
+                this.NavBallRetrograde = navBallVectors.Find(ModStrings.NavBallTransform.Retrograde);
+                this.NavBallRadialIn = navBallVectors.Find(ModStrings.NavBallTransform.RadialIn);
+                this.NavBallRadialOut = navBallVectors.Find(ModStrings.NavBallTransform.RadialOut);
+                this.NavBallNormal = navBallVectors.Find(ModStrings.NavBallTransform.Normal);
+                this.NavBallAntiNormal = navBallVectors.Find(ModStrings.NavBallTransform.AntiNormal);
+                this.NavBallBurn = navBallVectors.Find(ModStrings.NavBallTransform.Burn);
+                this.NavBallBurnArrow = navBallVectors.Find(ModStrings.NavBallTransform.BurnArrow);
+                this.NavBallTarget = navBallVectors.Find(ModStrings.NavBallTransform.Target);
+                this.NavBallAntiTarget = navBallVectors.Find(ModStrings.NavBallTransform.AntiTarget);
                 
                 this.ProgradeMaterial = this.NavBallPrograde.GetComponent<MeshRenderer>().materials[0];
                 this.RetrogradeMaterial = this.NavBallRetrograde.GetComponent<MeshRenderer>().materials[0];
@@ -945,13 +961,13 @@ namespace NavBallAdjustor
         /// </summary>
         private void PopulateNavWaypointMarker()
         {
-            Transform navBall = FlightUIModeController.Instance.navBall.transform.FindChild(ModStrings.NavBallTransform.NavBall);
+            Transform navBall = FlightUIModeController.Instance.navBall.transform.Find(ModStrings.NavBallTransform.NavBall);
 
             if (navBall != null)
             {
-                Transform navBallVectors = navBall.FindChild(ModStrings.NavBallTransform.Vectors);
+                Transform navBallVectors = navBall.Find(ModStrings.NavBallTransform.Vectors);
 
-                this.NavBallNavWaypoint = navBallVectors.FindChild(ModStrings.NavBallTransform.NavWaypoint);
+                this.NavBallNavWaypoint = navBallVectors.Find(ModStrings.NavBallTransform.NavWaypoint);
 
                 if (this.NavBallNavWaypoint != null)
                 {

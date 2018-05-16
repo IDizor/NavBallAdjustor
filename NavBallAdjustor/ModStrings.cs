@@ -153,12 +153,12 @@
             /// <summary>
             /// The afraid mouse cursor on map label.
             /// </summary>
-            public const string AfraidMouseOnMap = "Afraid mouse cursor on Map View";
+            public const string AfraidMouseOnMap = "NavBall avoids mouse on Map View";
 
             /// <summary>
             /// The afraid mouse cursor on flight label.
             /// </summary>
-            public const string AfraidMouseOnFlight = "Afraid mouse cursor on Flight View";
+            public const string AfraidMouseOnFlight = "NavBall avoids mouse on Flight View";
 
             /// <summary>
             /// The markers priorities toggle label.
@@ -180,6 +180,11 @@
             /// The save button.
             /// </summary>
             public const string Save = "Save";
+
+            /// <summary>
+            /// The cancel button.
+            /// </summary>
+            public const string Cancel = "Cancel";
 
             /// <summary>
             /// The close button.

@@ -626,8 +626,9 @@ namespace NavBallAdjustor
 
             GUI.contentColor = this.DefaultContentColor;
 
-            // Save & Close
             GUILayout.Space(90f);
+
+            GUILayout.BeginHorizontal();
             if (GUILayout.Button(ModStrings.Button.Save))
             {
                 this.ProgradeColor = this.ProgradeMaterial.GetColor(PropertyIDs._TintColor);
@@ -650,6 +651,16 @@ namespace NavBallAdjustor
 
                 return;
             }
+            if (GUILayout.Button(ModStrings.Button.Cancel))
+            {
+                this.ShowColorOptions = false;
+                this.LoadConfig();
+                this.ApplyLoadedScales();
+                this.ApplyLoadedColors();
+
+                return;
+            }
+            GUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
 
